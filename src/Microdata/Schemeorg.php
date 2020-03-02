@@ -36,19 +36,31 @@ class Schemeorg implements MicrodataAdapaterInterface
           </li>',
     ];
 
+    /**
+     * @param string $htmlCrumb
+     * @param int $index
+     * @return string
+     */
     public function injection(string $htmlCrumb, int $index)
     {
         $htmlCrumb = str_replace('{{position}}', $index, $htmlCrumb);
         return $htmlCrumb;
     }
 
+    /**
+     * @param array $template
+     */
     public function setTemplate(array $template)
     {
         $this->template['linked'] = $template[0];
         $this->template['not-linked'] = $template[1];
     }
 
-    public function getTemplate($key)
+    /**
+     * @param string $key
+     * @return mixed
+     */
+    public function getTemplate(string $key)
     {
         return $this->template[$key];
     }
