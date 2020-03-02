@@ -14,6 +14,7 @@ namespace Phalcon;
 use Phalcon\Breadcrumbs\Exception\InvalidArgumentException;
 use Phalcon\Breadcrumbs\Exception\OutOfBoundsException;
 use Phalcon\Breadcrumbs\Exception\UnderflowException;
+use Phalcon\Breadcrumbs\Microdata\MicrodataAdapaterInterface;
 use Phalcon\Di\Injectable;
 use Phalcon\Events\ManagerInterface as EventsManagerInterface;
 use Phalcon\Logger\AdapterInterface as LegacyLoggerInterface;
@@ -81,6 +82,12 @@ class Breadcrumbs extends Injectable
      * @var bool
      */
     protected $lastNotLinked = false;
+
+    /**
+     * Use Adapter Microdata, e.g.Schema.org BreadcrumbList
+     * @var null|MicrodataAdapaterInterface
+     */
+    protected $microdataAdapter;
 
     /**
      * Count null link
@@ -428,7 +435,6 @@ class Breadcrumbs extends Injectable
 
         $i = 0;
         foreach ($this->elements as $key => $crumb) {
-            $i++;
             $label = $crumb['label'];
             if ($this->translate) {
                 if ($this->eventsManager) {
@@ -450,16 +456,20 @@ class Breadcrumbs extends Injectable
                 $htmlCrumb = str_replace(
                     ['{{link}}', '{{label}}'],
                     [$crumb['link'], $label],
-                    $this->template['linked']
+                    $this->getTemplate('linked', $i)
                 );
             } else {
-                $htmlCrumb = str_replace('{{label}}', $label, $this->template['not-linked']);
+                $htmlCrumb = str_replace('{{label}}', $label, $this->getTemplate('not-linked', $i));
             }
 
-            if (1 === $i) {
+            if (0 === $i) {
                 $htmlCrumb = str_replace('{{icon}}', $this->template['icon'], $htmlCrumb);
             } else {
                 $htmlCrumb = str_replace('{{icon}}', '', $htmlCrumb);
+            }
+
+            if ($this->useMicrodata()) {
+                $htmlCrumb = $this->microdataAdapter->injection($htmlCrumb, $i);
             }
 
             $this->remove($key);
@@ -470,6 +480,7 @@ class Breadcrumbs extends Injectable
             } else {
                 $content .= $htmlCrumb;
             }
+            $i++;
         }
 
         // We return the breadcrumbs as string if the implicitFlush is turned off
@@ -479,6 +490,44 @@ class Breadcrumbs extends Injectable
 
         if ($this->eventsManager) {
             $this->eventsManager->fire('breadcrumbs:afterOutput', $this);
+        }
+    }
+
+    /**
+     * @return bool
+     */
+    public function useMicrodata() {
+        return !! $this->microdataAdapter;
+    }
+
+    /**
+     * @param string $key
+     * @param int $index
+     * @return string
+     */
+    public function getTemplate(string $key, int $index)
+    {
+        if ($this->useMicrodata() && $index !== 0){
+            $template = $this->microdataAdapter->getTemplate($key);
+        } else {
+            $template = $this->template[$key];
+        }
+        return $template;
+    }
+
+    /**
+     * @param MicrodataAdapaterInterface $adapter
+     * @param array $template
+     */
+    public function setMicrodataAdapter(
+        MicrodataAdapaterInterface $adapter,
+        array $template = []
+    )
+    {
+        $this->microdataAdapter = $adapter;
+
+        if (!empty($template)) {
+            $this->microdataAdapter->setTemplate($template);
         }
     }
 

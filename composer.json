@@ -30,7 +30,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Phalcon\\": "src/"
+            "Phalcon\\Breadcrumbs\\": "src/"
         }
     },
     "support": {
