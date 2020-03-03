@@ -9,7 +9,7 @@
  * LICENSE.txt file that was distributed with this source code.
  */
 
-namespace Phalcon;
+namespace Phalcon\Breadcrumbs;
 
 use Phalcon\Breadcrumbs\Exception\InvalidArgumentException;
 use Phalcon\Breadcrumbs\Exception\OutOfBoundsException;
